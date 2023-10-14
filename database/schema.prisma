@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model otp {
+  id          String   @id @default(uuid())
+  phoneNumber String
+  code        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("otp")
+}
+
+model user {
+  id            String         @id @default(uuid())
+  name          String
+  phoneNumber   String
+  profession    String
+  dateOfBirth   DateTime
+  sex           String
+  interest      String         @db.LongText
+  password      String
+  phoneVerified Boolean        @default(false)
+  active        Boolean        @default(true)
+  isAdmin       Boolean        @default(false)
+  hasPayment    Boolean        @default(false)
+  email         String?
+  parentId      String?
+  locale        String?        @default("en-US")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications notification[]
+  exports       userExport[]
+  transactions  transaction[]
+
+  @@map("user")
+}
+
+model notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String   @db.MediumText
+  read      Boolean  @default(false)
+  userId    String
+  user      user     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification")
+}
+
+model userExport {
+  id        String    @id @default(uuid())
+  status    String    @default("PENDING")
+  userId    String
+  fileId    String?
+  message   String?
+  user      user      @relation(fields: [userId], references: [id])
+  startTime DateTime?
+  endTime   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("user_export")
+}
+
+model transaction {
+  id                  String   @id @default(uuid())
+  type                String
+  amount              String
+  fee                 String
+  status              String   @default("PENDING")
+  senderPhoneNumber   String
+  receiverPhoneNumber String
+  user                user     @relation(fields: [userId], references: [id])
+  userId              String
+  motif               String
+  details             String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("transaction")
+}
