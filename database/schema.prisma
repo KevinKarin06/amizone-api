@@ -30,6 +30,7 @@ model user {
   active        Boolean        @default(true)
   isAdmin       Boolean        @default(false)
   hasPayment    Boolean        @default(false)
+  profileImage  String?        @db.LongText
   email         String?
   parentId      String?
   locale        String?        @default("en-US")
@@ -81,6 +82,7 @@ model transaction {
   user                user     @relation(fields: [userId], references: [id])
   userId              String
   motif               String
+  referralIds         String?  @db.LongText
   details             String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

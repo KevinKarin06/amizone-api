@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BullModule } from '@nestjs/bull';
-import { QUEUE_LOCK_DURATION } from './utils/constants';
 import { AuthenticationModule } from './core/authentication/authentication.module';
 import { ExportModule } from './core/export/export.module';
 import { FileModule } from './core/file/file.module';
@@ -14,33 +12,21 @@ import { PrismaModule } from './core/prisma/prisma.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
+import { ProfileModule } from './core/profile/profile.module';
 
 @Module({
   imports: [
-    BullModule.registerQueue(
-      {
-        name: 'transaction',
-        redis: {
-          password: process.env.REDIS_PASSWORD,
-          host: process.env.REDIS_HOST,
-          port: Number(process.env.REDIS_PORT),
-        },
-        settings: {
-          lockDuration: QUEUE_LOCK_DURATION,
-        },
-      },
-      {
-        name: 'exports',
-        redis: {
-          password: process.env.REDIS_PASSWORD,
-          host: process.env.REDIS_HOST,
-          port: Number(process.env.REDIS_PORT),
-        },
-        settings: {
-          lockDuration: QUEUE_LOCK_DURATION,
-        },
-      },
-    ),
+    // BullModule.registerQueue({
+    //   name: 'exports',
+    //   redis: {
+    //     password: process.env.REDIS_PASSWORD,
+    //     host: process.env.REDIS_HOST,
+    //     port: Number(process.env.REDIS_PORT),
+    //   },
+    //   settings: {
+    //     lockDuration: QUEUE_LOCK_DURATION,
+    //   },
+    // }),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_TOKEN,
@@ -54,6 +40,7 @@ import { AuthGuard } from './guards/auth.guard';
     TransactionModule,
     UserModule,
     PrismaModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [

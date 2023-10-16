@@ -1,13 +1,13 @@
 import {
   IsString,
   IsOptional,
-  IsNotEmpty,
-  IsNumber,
   IsEmail,
+  IsBase64,
+  IsBoolean,
 } from 'class-validator';
 import { IsValidSex } from '../common/validator';
 
-export class RegisterDto {
+export class UserDto {
   @IsString()
   name: string;
 
@@ -27,11 +27,20 @@ export class RegisterDto {
   interest: string;
 
   @IsString()
+  @IsOptional()
   password: string;
+
+  @IsOptional()
+  @IsBoolean()
+  active?: string;
 
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsBase64()
+  profileImage?: string;
 
   @IsOptional()
   @IsString()
@@ -40,32 +49,4 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   locale?: string;
-}
-
-export class LoginDto {
-  @IsString()
-  phoneNumber: string;
-
-  @IsString()
-  password: string;
-}
-
-export class ResendDto {
-  @IsNotEmpty()
-  phoneNumber: string;
-}
-
-export class VerifyDto {
-  @IsNotEmpty()
-  phoneNumber: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  code: string;
-}
-
-export class ResetDto {
-  @IsString()
-  @IsNotEmpty()
-  password: string;
 }
