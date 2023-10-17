@@ -112,11 +112,15 @@ export const formatQueryParams = (queryParams: any, filterFields = []) => {
 
   filterFields.forEach((field) => {
     if (queryParams?.[field]) {
-      if (field === 'id') {
-        try {
-          filters[field] = Number(queryParams[field]);
-        } catch (error) {
-          filters[field] = queryParams[field];
+      if (field === 'interest') {
+        filters[field] = { contains: queryParams[field] };
+      } else if (field === 'startDate') {
+        filters['createdAt'] = { gte: new Date(queryParams[field]) };
+      } else if (field === 'endDate') {
+        if (filters['createdAt']) {
+          filters['createdAt'].lte = new Date(queryParams[field]);
+        } else {
+          filters['createdAt'] = { lte: new Date(queryParams[field]) };
         }
       } else {
         filters[field] = queryParams[field];

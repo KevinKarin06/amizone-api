@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthenticationModule } from './core/authentication/authentication.module';
+import { AuthenticationModule } from './core/auth/authentication.module';
 import { ExportModule } from './core/export/export.module';
-import { FileModule } from './core/file/file.module';
 import { NotificationModule } from './core/notification/notification.module';
 import { TransactionModule } from './core/transaction/transaction.module';
-import { UserModule } from './core/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from './core/prisma/prisma.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -16,17 +14,6 @@ import { ProfileModule } from './core/profile/profile.module';
 
 @Module({
   imports: [
-    // BullModule.registerQueue({
-    //   name: 'exports',
-    //   redis: {
-    //     password: process.env.REDIS_PASSWORD,
-    //     host: process.env.REDIS_HOST,
-    //     port: Number(process.env.REDIS_PORT),
-    //   },
-    //   settings: {
-    //     lockDuration: QUEUE_LOCK_DURATION,
-    //   },
-    // }),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_TOKEN,
@@ -35,10 +22,8 @@ import { ProfileModule } from './core/profile/profile.module';
     EventEmitterModule.forRoot(),
     AuthenticationModule,
     ExportModule,
-    FileModule,
     NotificationModule,
     TransactionModule,
-    UserModule,
     PrismaModule,
     ProfileModule,
   ],

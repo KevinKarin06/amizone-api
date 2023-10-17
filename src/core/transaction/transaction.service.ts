@@ -5,7 +5,7 @@ import { Queue } from 'bull';
 import { ApiResponse } from 'src/types/response';
 import { user } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { TransactionStatus } from 'src/utils/constants';
+import { Status } from 'src/utils/constants';
 
 @Injectable()
 export class TransactionService {
@@ -22,7 +22,7 @@ export class TransactionService {
     const pendingTransaction = await this.prismaService.transaction.findFirst({
       where: {
         userId: authUser.id,
-        status: TransactionStatus.Pending,
+        status: Status.Pending,
       },
     });
 
