@@ -26,7 +26,26 @@ export class AppService implements OnModuleInit {
             dateOfBirth: new Date(),
             interest: '',
             name: 'Admin',
-            phoneNumber: process.env.ADMIN_PHONE || '',
+            phoneNumber: process.env.ADMIN_PHONE || '237694271964',
+            profession: '',
+            sex: 'M',
+            isAdmin: true,
+            phoneVerified: true,
+            hasPayment: true,
+            password: hashed,
+          },
+        });
+      } else {
+        const password = process.env.ADMIN_PASS || 'pass';
+        const hashed = await hashPassword(password);
+
+        await this.prismaService.user.update({
+          where: { id: existingAdmin.id },
+          data: {
+            dateOfBirth: new Date(),
+            interest: '',
+            name: 'Admin',
+            phoneNumber: process.env.ADMIN_PHONE || '237694271964',
             profession: '',
             sex: 'M',
             isAdmin: true,
