@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt';
 import { PUBLIC_DIR } from './constants';
 import { join } from 'path';
 import * as fs from 'fs';
-import { EOL } from 'os';
+import { uuid } from 'uuidv4';
 
 export const hashPassword = async (
   password: string,
@@ -51,9 +51,9 @@ export const createDir = (dirPath: string) => {
   }
 };
 
-export const writeFile = (filePath, content, append = false) => {
+export const writeToFile = (filePath: string, content: any, append = false) => {
   if (append) {
-    fs.appendFileSync(filePath, JSON.stringify(content) + EOL, {
+    fs.appendFileSync(filePath, content, {
       encoding: 'utf-8',
     });
   } else {
@@ -70,12 +70,8 @@ export const generateShopifyOutputFilePath = (
   return join(PUBLIC_DIR, type, fileName);
 };
 
-export const generateFilePath = (
-  filename: string,
-  folder: string,
-  companyId: string,
-) => {
-  const dirPath = join(PUBLIC_DIR, String(companyId), folder);
+export const generateFilePath = (filename: string, folder: string) => {
+  const dirPath = join(PUBLIC_DIR, folder);
   const filePath = join(dirPath, filename);
 
   createDir(dirPath);
@@ -87,16 +83,13 @@ export const deleteFile = (filePath: string) => {
   fs.unlinkSync(filePath);
 };
 
-export const generateAppIconUrl = (path: string) => {
-  if (!path) {
-    return null;
-  }
+export const generateUUID = () => {
+  return uuid();
+};
 
-  const url: any = path.replace(/\\/g, '/').split('/');
-
-  url.shift();
-  const result = `${process.env.BASE_URL}/${url.join('/')}`;
-  return result;
+export const getCurrentTimestamp = () => {
+  const currentDate = new Date();
+  return currentDate.getTime();
 };
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

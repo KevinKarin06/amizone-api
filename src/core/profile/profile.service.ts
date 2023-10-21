@@ -9,11 +9,7 @@ import { user } from '@prisma/client';
 import { ApiResponse } from 'src/types/response';
 import { hashPassword } from 'src/utils/misc';
 import { UserDto } from './user.dto';
-import {
-  MAX_DEPTH,
-  TransactionMotif,
-  Status,
-} from 'src/utils/constants';
+import { MAX_DEPTH, TransactionMotif, Status } from 'src/utils/constants';
 import { calculateReferralBalance } from '../prisma/prisma-utils';
 
 @Injectable()
@@ -24,7 +20,6 @@ export class ProfileService {
     queryParams: Record<string, any>,
   ): Promise<ApiResponse<user[]> | HttpException> {
     const { pagination, filters } = queryParams;
-    console.log(filters);
 
     const users = await this.prismaService.user.findMany({
       where: { ...filters },
