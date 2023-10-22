@@ -10,12 +10,12 @@ export class TechSoftAPI {
     });
   }
 
-  async sendOtp(data: SmsMessage) {
+  async sendSms(data: SmsMessage) {
     try {
       const r = await this.httpClient.get(this.buildSmsUrl(data));
-      console.log(r.data);
+      console.log('response', r.data);
     } catch (error) {
-      console.log(error);
+      console.log('error', error);
     }
   }
 

@@ -46,6 +46,13 @@ export class ExportController {
     );
   }
 
+  @Get('')
+  async getExports(@Query() params: any, @Req() req: any) {
+    const queryParams = formatQueryParams(params, this.filterableFields);
+
+    return await this.exportService.getUserExports(req.user, queryParams);
+  }
+
   @Get(':id')
   async downloadExport(
     @Req() req: any,

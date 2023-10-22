@@ -9,7 +9,7 @@ import {
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiResponse } from 'src/types/response';
-import { user } from '@prisma/client';
+import { user, userExport } from '@prisma/client';
 import { EVENTS, Status } from 'src/utils/constants';
 import {
   generateFilePath,
@@ -67,6 +67,22 @@ export class ExportService {
     });
 
     return new ApiResponse({ data: {}, statusCode: 200 });
+  }
+
+  async getUserExports(
+    authUser: user,
+    queryParams: Record<string, any>,
+  ): Promise<ApiResponse<userExport[]> | HttpException> {
+    const { pagination, filters } = queryParams;
+
+    const userExports = await this.prismaService.userExport.findMany({
+      where: { ...filters, userId: authUser.isAdmin ? undefined : authUser.id },
+      skip: pagination.skip,
+      take: pagination.limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return new ApiResponse({ data: userExports, statusCode: 200 });
   }
 
   @OnEvent(EVENTS.launchExport, { async: true })

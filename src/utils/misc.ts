@@ -63,13 +63,6 @@ export const writeToFile = (filePath: string, content: any, append = false) => {
   }
 };
 
-export const generateShopifyOutputFilePath = (
-  fileName: string,
-  type = 'images',
-) => {
-  return join(PUBLIC_DIR, type, fileName);
-};
-
 export const generateFilePath = (filename: string, folder: string) => {
   const dirPath = join(PUBLIC_DIR, folder);
   const filePath = join(dirPath, filename);

@@ -29,6 +29,6 @@ export class NotificationService extends TechSoftAPI {
       phoneNumber: payload.phoneNumber,
     };
 
-    await this.sendOtp(data);
+    await this.sendSms(data);
   }
 }

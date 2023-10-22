@@ -12,15 +12,34 @@ export class AppService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    await this.cleanPendingExports();
+    await this.initDefaultAdmin();
+  }
+
+  private async cleanPendingExports() {
+    try {
+      await this.prismaService.userExport.updateMany({
+        where: { status: Status.Pending },
+        data: {
+          status: Status.Failed,
+          message: 'Export cancelled',
+          endTime: new Date(),
+        },
+      });
+    } catch (error) {
+      console.log('Failed clean export', error?.message);
+    }
+  }
+
+  private async initDefaultAdmin() {
     try {
       const existingAdmin = await this.prismaService.user.findFirst({
         where: { isAdmin: true },
       });
 
+      const password = process.env.ADMIN_PASS || 'pass';
+      const hashed = await hashPassword(password);
       if (!existingAdmin) {
-        const password = process.env.ADMIN_PASS || 'pass';
-        const hashed = await hashPassword(password);
-
         await this.prismaService.user.create({
           data: {
             dateOfBirth: new Date(),
@@ -36,34 +55,14 @@ export class AppService implements OnModuleInit {
           },
         });
       } else {
-        const password = process.env.ADMIN_PASS || 'pass';
-        const hashed = await hashPassword(password);
-
         await this.prismaService.user.update({
           where: { id: existingAdmin.id },
           data: {
-            dateOfBirth: new Date(),
-            interest: '',
-            name: 'Admin',
-            phoneNumber: process.env.ADMIN_PHONE || '237694271964',
-            profession: '',
-            sex: 'M',
-            isAdmin: true,
-            phoneVerified: true,
-            hasPayment: true,
+            phoneNumber: process.env.ADMIN_PHONE || '2376942719640',
             password: hashed,
           },
         });
       }
-
-      await this.prismaService.userExport.updateMany({
-        where: { status: Status.Pending },
-        data: {
-          status: Status.Failed,
-          message: 'Export cancelled',
-          endTime: new Date(),
-        },
-      });
     } catch (error) {
       console.log('Failed to initialize admin', error?.message);
     }
