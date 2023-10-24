@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { TransactionController } from './transaction.controller';
 import { TransactionWorker } from './transaction-worker';
-import { CamPayAPI } from './cam-pay-api';
 import { BullModule } from '@nestjs/bull';
 import { QUEUE_LOCK_DURATION } from 'src/utils/constants';
 
@@ -17,11 +16,11 @@ import { QUEUE_LOCK_DURATION } from 'src/utils/constants';
         maxRetriesPerRequest: 1,
       },
       settings: {
-        // lockDuration: QUEUE_LOCK_DURATION,
+        lockDuration: QUEUE_LOCK_DURATION,
       },
     }),
   ],
-  providers: [TransactionService, TransactionWorker, CamPayAPI],
+  providers: [TransactionService, TransactionWorker],
   controllers: [TransactionController],
 })
 export class TransactionModule {}

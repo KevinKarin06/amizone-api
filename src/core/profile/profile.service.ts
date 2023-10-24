@@ -208,20 +208,26 @@ export class ProfileService {
     let hashed = null;
     if (password && password != '') {
       hashed = await hashPassword(password);
-      userData = { ...rest, password: hashed };
+      userData = { password: hashed };
     }
 
-    if (authUser.isAdmin) {
+    if (authUser.isAdmin && active != undefined) {
       userData['active'] = active;
     }
 
-    if (data.phoneNumber != user.phoneNumber) {
+    if (data.phoneNumber && data.phoneNumber != user.phoneNumber) {
       userData['phoneVerified'] = false;
     }
 
     const updatedUser = await this.prismaService.user.update({
-      where: { id: authUser.id },
-      data: { ...userData, dateOfBirth: new Date(dateOfBirth) },
+      where: { id: user.id },
+      data: {
+        ...rest,
+        ...userData,
+        dateOfBirth: data.dateOfBirth
+          ? new Date(dateOfBirth)
+          : user.dateOfBirth,
+      },
     });
 
     return new ApiResponse({ data: updatedUser, statusCode: 201 });

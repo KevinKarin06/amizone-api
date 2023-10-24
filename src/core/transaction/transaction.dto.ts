@@ -39,4 +39,23 @@ export class TransactionDto {
   @IsString()
   @IsValidMotif()
   motif: string;
+
+  @IsNotEmpty()
+  @IsString()
+  phoneNumber: string;
+}
+
+export interface TransactionData {
+  reference: string;
+  status: string;
+  amount: string;
+  currency: string;
+  operator: string;
+  code: string;
+  operator_reference: string;
+  endpoint: string;
+  signature: string;
+  external_reference: string;
+  external_user: string;
+  app_amount: string;
 }

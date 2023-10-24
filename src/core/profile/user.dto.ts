@@ -9,26 +9,32 @@ import { IsValidSex } from '../common/validator';
 
 export class UserDto {
   @IsString()
-  name: string;
-
-  @IsString()
-  phoneNumber: string;
-
-  @IsString()
-  profession: string;
-
-  @IsString()
-  dateOfBirth: Date;
-
-  @IsValidSex()
-  sex: string;
-
-  @IsString()
-  interest: string;
+  @IsOptional()
+  name?: string;
 
   @IsString()
   @IsOptional()
-  password: string;
+  phoneNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  profession?: string;
+
+  @IsString()
+  @IsOptional()
+  dateOfBirth?: Date;
+
+  @IsValidSex()
+  @IsOptional()
+  sex?: string;
+
+  @IsString()
+  @IsOptional()
+  interest?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
 
   @IsOptional()
   @IsBoolean()

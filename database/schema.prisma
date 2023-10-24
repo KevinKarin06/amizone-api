@@ -78,7 +78,7 @@ model transaction {
   id                  String   @id @default(uuid())
   type                String
   amount              String
-  fee                 String
+  fee                 String?
   status              String   @default("PENDING")
   senderPhoneNumber   String
   receiverPhoneNumber String
