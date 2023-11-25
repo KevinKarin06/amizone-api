@@ -18,11 +18,16 @@ export class ProfileService {
 
   async getUsers(
     queryParams: Record<string, any>,
+    authUser: user,
   ): Promise<ApiResponse<user[]> | HttpException> {
     const { pagination, filters } = queryParams;
 
     const users = await this.prismaService.user.findMany({
-      where: { ...filters },
+      where: {
+        ...filters,
+        parentId: authUser.isAdmin ? undefined : authUser.id,
+        isAdmin: false,
+      },
       skip: pagination.skip,
       take: pagination.limit,
     });
@@ -30,9 +35,16 @@ export class ProfileService {
     return new ApiResponse({ data: users, statusCode: 200 });
   }
 
-  async searchUser(term: string): Promise<ApiResponse<user[]> | HttpException> {
+  async searchUser(
+    term: string,
+    authUser: user,
+  ): Promise<ApiResponse<user[]> | HttpException> {
     const users = await this.prismaService.user.findMany({
-      where: { name: { contains: term } },
+      where: {
+        name: { contains: term },
+        parentId: authUser.isAdmin ? undefined : authUser.id,
+        isAdmin: false,
+      },
       take: 10,
     });
 

@@ -19,16 +19,19 @@ import {
 import { ApiResponse } from 'src/types/response';
 import { user } from '@prisma/client';
 import { checkOtpExpired, comparePassword, hashPassword } from 'src/utils/misc';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EVENTS } from 'src/utils/constants';
+// import { EventEmitter2 } from '@nestjs/event-emitter';
+// import { EVENTS } from 'src/utils/constants';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class AuthenticationService {
+  private notificationService: NotificationService;
   constructor(
     private prismaService: PrismaService,
-    private jwtService: JwtService,
-    private eventEmitter: EventEmitter2,
-  ) {}
+    private jwtService: JwtService, // private eventEmitter: EventEmitter2,
+  ) {
+    this.notificationService = new NotificationService(this.prismaService);
+  }
 
   async register(
     data: RegisterDto,
@@ -58,7 +61,8 @@ export class AuthenticationService {
       data: { ...rest, password: hashed, dateOfBirth: new Date(dateOfBirth) },
     });
 
-    this.eventEmitter.emit(EVENTS.otpSend, user);
+    // this.eventEmitter.emit(EVENTS.otpSend, user);
+    await this.notificationService.handleSendOtpEvent(user);
 
     return new ApiResponse({ data: user, statusCode: 201 });
   }
@@ -81,7 +85,8 @@ export class AuthenticationService {
     }
 
     if (!user.phoneVerified) {
-      this.eventEmitter.emit(EVENTS.otpSend, user);
+      // this.eventEmitter.emit(EVENTS.otpSend, user);
+      await this.notificationService.handleSendOtpEvent(user);
 
       return new ApiResponse({ data: user, statusCode: 201 });
     }
@@ -147,7 +152,8 @@ export class AuthenticationService {
       throw new NotFoundException('User not found');
     }
 
-    this.eventEmitter.emit(EVENTS.otpSend, user);
+    // this.eventEmitter.emit(EVENTS.otpSend, user);
+    await this.notificationService.handleSendOtpEvent(user);
 
     return new ApiResponse({ data: user, statusCode: 201 });
   }

@@ -58,7 +58,7 @@ export class AppService implements OnModuleInit {
         await this.prismaService.user.update({
           where: { id: existingAdmin.id },
           data: {
-            phoneNumber: process.env.ADMIN_PHONE || '2376942719640',
+            phoneNumber: process.env.ADMIN_PHONE || '237694271964',
             password: hashed,
           },
         });

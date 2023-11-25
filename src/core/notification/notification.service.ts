@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+// import { OnEvent } from '@nestjs/event-emitter';
 import { user } from '@prisma/client';
-import { EVENTS } from 'src/utils/constants';
+// import { EVENTS } from 'src/utils/constants';
 import { TechSoftAPI } from './tech-soft-api';
 import { generateOtpCode } from 'src/utils/misc';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,7 +13,7 @@ export class NotificationService extends TechSoftAPI {
     super();
   }
 
-  @OnEvent(EVENTS.otpSend, { async: true })
+  // @OnEvent(EVENTS.otpSend, { async: true })
   async handleSendOtpEvent(payload: user) {
     const otp = generateOtpCode(6);
 

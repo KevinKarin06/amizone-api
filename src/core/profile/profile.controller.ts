@@ -28,18 +28,16 @@ export class ProfileController {
 
   constructor(private profileService: ProfileService) {}
 
-  @Admin()
   @Get('user')
-  async getUsers(@Query() params: any) {
+  async getUsers(@Query() params: any, @Req() req: any) {
     const queryParams = formatQueryParams(params, this.filterableFields);
 
-    return await this.profileService.getUsers(queryParams);
+    return await this.profileService.getUsers(queryParams, req.user);
   }
 
-  @Admin()
   @Get('user/search')
-  async searchUser(@Query() params: any) {
-    return await this.profileService.searchUser(params.term);
+  async searchUser(@Query() params: any, @Req() req: any) {
+    return await this.profileService.searchUser(params.term, req.user);
   }
 
   @Admin()
