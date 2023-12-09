@@ -64,7 +64,10 @@ export class AuthenticationService {
     // this.eventEmitter.emit(EVENTS.otpSend, user);
     await this.notificationService.handleSendOtpEvent(user);
 
-    return new ApiResponse({ data: user, statusCode: 201 });
+    // Generate the JWT of this user.
+    const token = await this.jwtService.signAsync(user, { expiresIn: '7d' });
+
+    return new ApiResponse({ data: { ...user, token }, statusCode: 201 });
   }
 
   async login(data: LoginDto): Promise<ApiResponse<any> | HttpException> {
