@@ -29,16 +29,33 @@ export const getChildrenRecursive = async (user: any, n: number, depth = 1) => {
   return user;
 };
 
+export const extractReferralIDsFromTransactions = async (userId: string) => {
+  const transactions = await prismaClient.transaction.findMany({
+    where: {
+      userId: userId,
+      status: Status.Success,
+      motif: TransactionMotif.ReferralGain,
+    },
+    select: { referralIds: true },
+  });
+  const referralIds = transactions
+    .filter((t) => t.referralIds != null && t.referralIds != undefined)
+    .flatMap((t) => t.referralIds.trim().split(','));
+
+  return referralIds;
+};
+
 export const calculateReferralBalance = async (
   userId: string,
   n: number,
+  transactionReferralIds: Array<string>,
   depth = 1,
 ) => {
   if (depth > n) {
-    return 0;
+    return {};
   }
 
-  let referralGain = 0;
+  let referralGain = {};
 
   const directChildren = await prismaClient.user.findMany({
     where: { parentId: userId, id: { not: userId } },
@@ -46,23 +63,20 @@ export const calculateReferralBalance = async (
   });
 
   for (const child of directChildren) {
-    const transaction = await prismaClient.transaction.findFirst({
-      where: {
-        userId: userId,
-        referralIds: { contains: child.id },
-        status: Status.Success,
-        motif: TransactionMotif.ReferralGain,
-      },
-    });
-
-    if (!transaction) {
+    if (!transactionReferralIds.includes(child.id)) {
       const amount = referralRule[depth];
       if (amount) {
-        referralGain += amount;
+        referralGain[child.id] = amount;
       }
     }
 
-    referralGain += await calculateReferralBalance(child.id, n, depth + 1);
+    const temp = await calculateReferralBalance(
+      child.id,
+      n,
+      transactionReferralIds,
+      depth + 1,
+    );
+    referralGain = { ...referralGain, ...temp };
   }
 
   return referralGain;

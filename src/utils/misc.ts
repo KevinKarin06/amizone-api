@@ -126,3 +126,11 @@ export const formatQueryParams = (queryParams: any, filterFields = []) => {
 
   return { pagination, filters };
 };
+
+export const isDateOlderThanHours = (date: Date, hours: number): boolean => {
+  const hoursInMilliseconds = hours * 60 * 60 * 1000;
+  const currentDateTime = new Date();
+  const differenceInMilliseconds = currentDateTime.getTime() - date.getTime();
+
+  return differenceInMilliseconds > hoursInMilliseconds;
+};

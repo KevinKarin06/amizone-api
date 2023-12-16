@@ -10,9 +10,14 @@ export enum TransactionMotif {
   ReferralGain = 'REFERRAL_GAIN',
 }
 
+export enum TransactionType {
+  Debit = 'DEBIT',
+  Credit = 'CREDIT',
+}
+
 export enum Status {
   Pending = 'PENDING',
-  Success = 'SUCCESS',
+  Success = 'SUCCESSFUL',
   Failed = 'FAILED',
 }
 

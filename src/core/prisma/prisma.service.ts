@@ -17,7 +17,7 @@ export class PrismaService extends PrismaClient {
       model: {
         user: {
           async getReferralBalance(id: string, depth = 3) {
-            return await calculateReferralBalance(id, depth);
+            // return await calculateReferralBalance(id, depth);
           },
         },
       },

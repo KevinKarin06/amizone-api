@@ -1,20 +1,48 @@
-import { ConflictException, HttpException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  Injectable,
+} from '@nestjs/common';
 import { TransactionData, TransactionDto } from './transaction.dto';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ApiResponse } from 'src/types/response';
-import { user } from '@prisma/client';
+import { transaction, user } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Status, TransactionMotif } from 'src/utils/constants';
 import { JwtService } from '@nestjs/jwt';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { CamPayAPI } from './cam-pay-api';
+import { isDateOlderThanHours } from 'src/utils/misc';
 
 @Injectable()
 export class TransactionService {
+  private camPayService: CamPayAPI;
   constructor(
     @InjectQueue('transaction') private queueService: Queue,
     private prismaService: PrismaService,
     private jwtService: JwtService,
   ) {}
+
+  async getTransactions(
+    queryParams: Record<string, any>,
+    authUser: user,
+  ): Promise<ApiResponse<transaction[]> | HttpException> {
+    const { pagination, filters } = queryParams;
+
+    const transactions = await this.prismaService.transaction.findMany({
+      where: {
+        ...filters,
+        userId: authUser.isAdmin ? undefined : authUser.id,
+      },
+      skip: pagination.skip,
+      take: pagination.limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return new ApiResponse({ data: transactions, statusCode: 200 });
+  }
 
   async initializeTransaction(
     data: TransactionDto,
@@ -30,6 +58,12 @@ export class TransactionService {
 
     if (transaction && transaction.motif === data.motif) {
       throw new ConflictException('App fee already paid');
+    }
+
+    if (data.motif === TransactionMotif.ReferralGain && !authUser.hasPayment) {
+      throw new BadRequestException(
+        'Cannot withdraw without an active payment',
+      );
     }
 
     try {
@@ -52,6 +86,7 @@ export class TransactionService {
       await this.jwtService.verifyAsync(data.signature, {
         secret: process.env.CAM_PAY_WEBHOOK_SECRET,
       });
+
       const transaction = await this.prismaService.transaction.findUnique({
         where: { id: data.external_reference },
       });
@@ -63,7 +98,7 @@ export class TransactionService {
         });
 
         if (
-          updated.motif === 'APP_PAYMENT' &&
+          updated.motif === TransactionMotif.AppFee &&
           updated.status === Status.Success
         ) {
           await this.prismaService.user.update({
@@ -74,6 +109,50 @@ export class TransactionService {
       }
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async clearPendingTransactions() {
+    this.camPayService = await CamPayAPI.build();
+    const pendingTransactions = await this.prismaService.transaction.findMany({
+      where: { status: Status.Pending },
+    });
+
+    for (const t of pendingTransactions) {
+      try {
+        const remoteTransaction = await this.camPayService.getTransaction(
+          t.reference,
+        );
+
+        const transaction = await this.prismaService.transaction.findUnique({
+          where: { id: remoteTransaction.external_reference },
+        });
+
+        if (!transaction || !isDateOlderThanHours(transaction.createdAt, 1)) {
+          continue;
+        }
+
+        console.log(remoteTransaction);
+        if (transaction.status === Status.Pending) {
+          const updated = await this.prismaService.transaction.update({
+            where: { id: transaction.id },
+            data: { status: remoteTransaction.status },
+          });
+
+          if (
+            updated.motif === TransactionMotif.AppFee &&
+            updated.status === Status.Success
+          ) {
+            await this.prismaService.user.update({
+              where: { id: updated.userId },
+              data: { hasPayment: true },
+            });
+          }
+        }
+      } catch (error) {
+        //
+      }
     }
   }
 }
