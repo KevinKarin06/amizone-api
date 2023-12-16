@@ -112,7 +112,7 @@ export class TransactionService {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async clearPendingTransactions() {
     this.camPayService = await CamPayAPI.build();
     const pendingTransactions = await this.prismaService.transaction.findMany({
@@ -133,7 +133,6 @@ export class TransactionService {
           continue;
         }
 
-        console.log(remoteTransaction);
         if (transaction.status === Status.Pending) {
           const updated = await this.prismaService.transaction.update({
             where: { id: transaction.id },
