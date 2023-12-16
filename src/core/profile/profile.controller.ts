@@ -29,15 +29,15 @@ export class ProfileController {
   constructor(private profileService: ProfileService) {}
 
   @Get('user')
-  async getUsers(@Query() params: any, @Req() req: any) {
+  async getUsers(@Query() params: any) {
     const queryParams = formatQueryParams(params, this.filterableFields);
 
-    return await this.profileService.getUsers(queryParams, req.user);
+    return await this.profileService.getUsers(queryParams);
   }
 
   @Get('user/search')
-  async searchUser(@Query() params: any, @Req() req: any) {
-    return await this.profileService.searchUser(params.term, req.user);
+  async searchUser(@Query() params: any) {
+    return await this.profileService.searchUser(params.term);
   }
 
   @Admin()

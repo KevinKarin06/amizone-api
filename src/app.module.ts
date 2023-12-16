@@ -12,9 +12,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { ProfileModule } from './core/profile/profile.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_TOKEN,

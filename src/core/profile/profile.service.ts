@@ -10,7 +10,10 @@ import { ApiResponse } from 'src/types/response';
 import { hashPassword } from 'src/utils/misc';
 import { UserDto } from './user.dto';
 import { MAX_DEPTH, TransactionMotif, Status } from 'src/utils/constants';
-import { calculateReferralBalance } from '../prisma/prisma-utils';
+import {
+  calculateReferralBalance,
+  extractReferralIDsFromTransactions,
+} from '../prisma/prisma-utils';
 
 @Injectable()
 export class ProfileService {
@@ -18,14 +21,12 @@ export class ProfileService {
 
   async getUsers(
     queryParams: Record<string, any>,
-    authUser: user,
   ): Promise<ApiResponse<user[]> | HttpException> {
     const { pagination, filters } = queryParams;
 
     const users = await this.prismaService.user.findMany({
       where: {
         ...filters,
-        parentId: authUser.isAdmin ? undefined : authUser.id,
         isAdmin: false,
       },
       skip: pagination.skip,
@@ -35,14 +36,10 @@ export class ProfileService {
     return new ApiResponse({ data: users, statusCode: 200 });
   }
 
-  async searchUser(
-    term: string,
-    authUser: user,
-  ): Promise<ApiResponse<user[]> | HttpException> {
+  async searchUser(term: string): Promise<ApiResponse<user[]> | HttpException> {
     const users = await this.prismaService.user.findMany({
       where: {
         name: { contains: term },
-        parentId: authUser.isAdmin ? undefined : authUser.id,
         isAdmin: false,
       },
       take: 10,
@@ -192,9 +189,22 @@ export class ProfileService {
       throw new ForbiddenException();
     }
 
-    const balance = await calculateReferralBalance(user.id, MAX_DEPTH);
+    const transactionReferralIds = await extractReferralIDsFromTransactions(
+      user.id,
+    );
 
-    return new ApiResponse({ data: balance, statusCode: 200 });
+    const referralGain = await calculateReferralBalance(
+      user.id,
+      MAX_DEPTH,
+      transactionReferralIds,
+    );
+
+    const totalGain = Object.values(referralGain).reduce(
+      (acc: number, currentValue: number) => acc + currentValue,
+      0,
+    ) as number;
+
+    return new ApiResponse({ data: totalGain, statusCode: 200 });
   }
 
   async updateProfile(
