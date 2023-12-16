@@ -12,13 +12,13 @@ import { TransactionMotif } from 'src/utils/constants';
 class IsValidMotifConstraint implements ValidatorConstraintInterface {
   validate(value: string) {
     return (
-      value === TransactionMotif.AppPayment ||
+      value === TransactionMotif.AppFee ||
       value === TransactionMotif.ReferralGain
     );
   }
 
   defaultMessage() {
-    return `The value must be "${TransactionMotif.AppPayment}" or "${TransactionMotif.ReferralGain}".`;
+    return `The value must be "${TransactionMotif.AppFee}" or "${TransactionMotif.ReferralGain}".`;
   }
 }
 

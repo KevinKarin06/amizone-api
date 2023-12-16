@@ -6,7 +6,7 @@ export const EVENTS = {
 };
 
 export enum TransactionMotif {
-  AppPayment = 'APP_PAYMENT',
+  AppFee = 'APP_PAYMENT',
   ReferralGain = 'REFERRAL_GAIN',
 }
 

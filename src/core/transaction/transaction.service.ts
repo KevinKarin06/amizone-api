@@ -5,7 +5,7 @@ import { Queue } from 'bull';
 import { ApiResponse } from 'src/types/response';
 import { user } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { Status } from 'src/utils/constants';
+import { Status, TransactionMotif } from 'src/utils/constants';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class TransactionService {
       where: {
         userId: authUser.id,
         status: Status.Success,
-        motif: 'APP_PAYMENT',
+        motif: TransactionMotif.AppFee,
       },
     });
 

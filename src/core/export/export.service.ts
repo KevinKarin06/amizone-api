@@ -16,7 +16,7 @@ import {
   getCurrentTimestamp,
   writeToFile,
 } from 'src/utils/misc';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 
 @Injectable()
 export class ExportService {
@@ -39,6 +39,10 @@ export class ExportService {
 
     if (userExport.userId != authUser.id && !authUser.isAdmin) {
       throw new ForbiddenException();
+    }
+
+    if (!existsSync(userExport.filePath)) {
+      throw new NotFoundException('Exported file not found');
     }
 
     const file = createReadStream(userExport.filePath);
@@ -89,16 +93,16 @@ export class ExportService {
   async exportUserContacts(payload: any) {
     const { filters, userId, name } = payload;
 
+    const exportName = name || `Export_${getCurrentTimestamp()}`;
     const contactExport = await this.prismaService.userExport.create({
       data: {
         status: Status.Pending,
         userId,
-        name: name || `Export_${getCurrentTimestamp()}`,
+        name: exportName,
         startTime: new Date(),
       },
     });
-
-    const filePath = generateFilePath(`${contactExport.id}.vcf`, userId);
+    const filePath = generateFilePath(`${exportName}.vcf`, userId);
 
     try {
       let skip = 0;
