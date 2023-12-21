@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -64,5 +65,10 @@ export class ExportController {
       'Content-Disposition': `attachment; filename="${id}.vcf"`,
     });
     return await this.exportService.downloadContactExport(id, req.user);
+  }
+
+  @Delete(':id')
+  async deleteExport(@Req() req: any, @Param('id') id: string) {
+    return await this.exportService.deleteExport(id, req.user);
   }
 }

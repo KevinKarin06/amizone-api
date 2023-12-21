@@ -12,8 +12,8 @@ import { UserDto } from './user.dto';
 import { MAX_DEPTH, TransactionMotif, Status } from 'src/utils/constants';
 import {
   calculateReferralBalance,
-  extractReferralIDsFromTransactions,
-} from '../prisma/prisma-utils';
+  getReferralIDsFromTransactions,
+} from 'src/utils/referrals';
 
 @Injectable()
 export class ProfileService {
@@ -189,7 +189,7 @@ export class ProfileService {
       throw new ForbiddenException();
     }
 
-    const transactionReferralIds = await extractReferralIDsFromTransactions(
+    const transactionReferralIds = await getReferralIDsFromTransactions(
       user.id,
     );
 

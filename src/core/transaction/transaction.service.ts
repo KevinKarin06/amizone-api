@@ -18,7 +18,6 @@ import { isDateOlderThanHours } from 'src/utils/misc';
 
 @Injectable()
 export class TransactionService {
-  private camPayService: CamPayAPI;
   constructor(
     @InjectQueue('transaction') private queueService: Queue,
     private prismaService: PrismaService,
@@ -114,14 +113,14 @@ export class TransactionService {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async clearPendingTransactions() {
-    this.camPayService = await CamPayAPI.build();
     const pendingTransactions = await this.prismaService.transaction.findMany({
       where: { status: Status.Pending },
     });
 
     for (const t of pendingTransactions) {
       try {
-        const remoteTransaction = await this.camPayService.getTransaction(
+        const camPayService = await CamPayAPI.build();
+        const remoteTransaction = await camPayService.getTransaction(
           t.reference,
         );
 

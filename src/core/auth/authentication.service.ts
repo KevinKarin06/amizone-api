@@ -19,16 +19,18 @@ import {
 import { ApiResponse } from 'src/types/response';
 import { user } from '@prisma/client';
 import { checkOtpExpired, comparePassword, hashPassword } from 'src/utils/misc';
-// import { EventEmitter2 } from '@nestjs/event-emitter';
-// import { EVENTS } from 'src/utils/constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EVENTS } from 'src/utils/constants';
 import { NotificationService } from '../notification/notification.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class AuthenticationService {
   private notificationService: NotificationService;
   constructor(
     private prismaService: PrismaService,
-    private jwtService: JwtService, // private eventEmitter: EventEmitter2,
+    private jwtService: JwtService,
+    private eventEmitter: EventEmitter2,
   ) {
     this.notificationService = new NotificationService(this.prismaService);
   }
@@ -61,8 +63,7 @@ export class AuthenticationService {
       data: { ...rest, password: hashed, dateOfBirth: new Date(dateOfBirth) },
     });
 
-    // this.eventEmitter.emit(EVENTS.otpSend, user);
-    await this.notificationService.handleSendOtpEvent(user);
+    this.eventEmitter.emit(EVENTS.otpSend, user);
 
     return new ApiResponse({ data: user, statusCode: 201 });
   }
@@ -85,8 +86,7 @@ export class AuthenticationService {
     }
 
     if (!user.phoneVerified) {
-      // this.eventEmitter.emit(EVENTS.otpSend, user);
-      await this.notificationService.handleSendOtpEvent(user);
+      this.eventEmitter.emit(EVENTS.otpSend, user);
 
       return new ApiResponse({ data: user, statusCode: 201 });
     }
@@ -152,8 +152,7 @@ export class AuthenticationService {
       throw new NotFoundException('User not found');
     }
 
-    // this.eventEmitter.emit(EVENTS.otpSend, user);
-    await this.notificationService.handleSendOtpEvent(user);
+    this.eventEmitter.emit(EVENTS.otpSend, user);
 
     return new ApiResponse({ data: user, statusCode: 201 });
   }
@@ -178,5 +177,29 @@ export class AuthenticationService {
     });
 
     return new ApiResponse({ data: updatedUser, statusCode: 201 });
+  }
+
+  @Cron(CronExpression.EVERY_WEEKDAY)
+  async sendSignupCompletionReminder() {
+    const chunkSize = 100;
+    let skip = 0;
+    let users: user[];
+
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    do {
+      users = await this.prismaService.user.findMany({
+        where: { hasPayment: false, createdAt: { lt: twoDaysAgo } },
+        take: chunkSize,
+        skip: skip,
+      });
+
+      if (users.length > 0) {
+        this.eventEmitter.emit(EVENTS.signupCompletionReminder, users);
+      }
+
+      skip += chunkSize;
+    } while (users.length > 0);
   }
 }
