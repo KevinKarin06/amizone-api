@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   StreamableFile,
@@ -29,7 +30,7 @@ export class ExportService {
   async downloadContactExport(
     id: string,
     authUser: user,
-  ): Promise<StreamableFile | HttpException> {
+  ): Promise<any | HttpException> {
     const userExport = await this.prismaService.userExport.findUnique({
       where: { id },
     });
@@ -47,7 +48,7 @@ export class ExportService {
     }
 
     const file = createReadStream(userExport.filePath);
-    return new StreamableFile(file);
+    return { fileStream: new StreamableFile(file), fileName: userExport.name };
   }
 
   async deleteExport(
@@ -59,6 +60,13 @@ export class ExportService {
     });
     if (!userExport) {
       throw new NotFoundException('Export export not found');
+    }
+
+    if (userExport.status === Status.Pending) {
+      throw new HttpException(
+        'Cannot delete ongoing export',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     if (userExport.userId != authUser.id && !authUser.isAdmin) {

@@ -54,10 +54,57 @@ export class ProfileService {
     const { filters } = queryParams;
 
     const totalUsers = await this.prismaService.user.count({
-      where: { ...filters },
+      where: { ...filters, isAdmin: false },
     });
 
     return new ApiResponse({ data: totalUsers, statusCode: 200 });
+  }
+
+  async getTotalUsersMonthly(
+    year: string,
+  ): Promise<ApiResponse<number> | HttpException> {
+    let result: any = await this.prismaService.$queryRaw`
+    SELECT 
+      YEAR(createdAt) as year,
+      MONTH(createdAt) as month,
+      COUNT(id) as count
+    FROM user
+    WHERE YEAR(createdAt) = ${year}
+      AND isAdmin = ${false}
+    GROUP BY YEAR(createdAt), MONTH(createdAt)
+  `;
+
+    result = result.map((el: any) => {
+      const count = BigInt(el.count);
+      el['count'] = Number(count);
+      return el;
+    });
+
+    return new ApiResponse({ data: result, statusCode: 200 });
+  }
+
+  async getTotalPendingUsersMonthly(
+    year: string,
+  ): Promise<ApiResponse<number> | HttpException> {
+    let result: any = await this.prismaService.$queryRaw`
+    SELECT 
+      YEAR(createdAt) as year,
+      MONTH(createdAt) as month,
+      COUNT(id) as count
+    FROM user
+    WHERE hasPayment = ${false}
+      AND YEAR(createdAt) = ${year}
+      AND isAdmin = ${false}
+    GROUP BY YEAR(createdAt), MONTH(createdAt)
+  `;
+
+    result = result.map((el: any) => {
+      const count = BigInt(el.count);
+      el['count'] = Number(count);
+      return el;
+    });
+
+    return new ApiResponse({ data: result, statusCode: 200 });
   }
 
   async getProfile(

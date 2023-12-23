@@ -28,6 +28,7 @@ export class ProfileController {
 
   constructor(private profileService: ProfileService) {}
 
+  @Payment(true)
   @Get('user')
   async getUsers(@Query() params: any) {
     const queryParams = formatQueryParams(params, this.filterableFields);
@@ -35,17 +36,34 @@ export class ProfileController {
     return await this.profileService.getUsers(queryParams);
   }
 
+  @Payment(true)
   @Get('user/search')
   async searchUser(@Query() params: any) {
     return await this.profileService.searchUser(params.term);
   }
 
-  @Admin()
+  @Admin(true)
   @Get('user/count')
   async getUserCount(@Query() params: any) {
     const queryParams = formatQueryParams(params, this.filterableFields);
 
     return await this.profileService.getUserCount(queryParams);
+  }
+
+  @Admin(true)
+  @Get('user/count/monthly')
+  async getTotalUsersMonthly(@Req() req: any) {
+    return await this.profileService.getTotalUsersMonthly(
+      req.query?.year || new Date().getFullYear(),
+    );
+  }
+
+  @Admin(true)
+  @Get('user/pending-count/monthly')
+  async getTotalPendingUsersMonthly(@Req() req: any) {
+    return await this.profileService.getTotalPendingUsersMonthly(
+      req.query?.year || new Date().getFullYear(),
+    );
   }
 
   @Get('profile/:id')

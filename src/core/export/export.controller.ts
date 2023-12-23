@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { ExportService } from './export.service';
 import { formatQueryParams } from 'src/utils/misc';
-import { Admin } from 'src/guards/auth.guard';
+import { Admin, Payment } from 'src/guards/auth.guard';
 
 @Admin(false)
+@Payment(true)
 @Controller('export')
 export class ExportController {
   private filterableFields = [
@@ -60,11 +61,12 @@ export class ExportController {
     @Res({ passthrough: true }) res: any,
     @Param('id') id: string,
   ) {
+    const data = await this.exportService.downloadContactExport(id, req.user);
     res.set({
       'Content-Type': 'text/vcard',
-      'Content-Disposition': `attachment; filename="${id}.vcf"`,
+      'Content-Disposition': `attachment; filename="${data.fileName}.vcf"`,
     });
-    return await this.exportService.downloadContactExport(id, req.user);
+    return data.fileStream;
   }
 
   @Delete(':id')

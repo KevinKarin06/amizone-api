@@ -80,6 +80,53 @@ export class TransactionService {
     return new ApiResponse({ data: {}, statusCode: 201 });
   }
 
+  async getTotalMonthlyTransactionsByMotif(
+    motif: TransactionMotif,
+    year: string,
+  ): Promise<ApiResponse<any> | HttpException> {
+    const result: any = await this.prismaService.$queryRaw`
+    SELECT 
+      YEAR(createdAt) as year,
+      MONTH(createdAt) as month,
+      SUM(amount) as sum
+    FROM transaction
+    WHERE motif = ${motif}
+      AND status = ${Status.Success}
+      AND YEAR(createdAt) = ${year}
+    GROUP BY YEAR(createdAt), MONTH(createdAt)
+  `;
+
+    return new ApiResponse({ data: result, statusCode: 200 });
+  }
+
+  async getTotalTransactionsByMotif(
+    motif: TransactionMotif,
+  ): Promise<ApiResponse<number> | HttpException> {
+    const result: any = await this.prismaService.$queryRaw`
+         SELECT SUM(amount) AS sum
+         FROM transaction
+         WHERE motif = ${motif}
+         AND status = ${Status.Success}`;
+
+    return new ApiResponse({ data: result[0].sum || 0, statusCode: 200 });
+  }
+
+  async calculateTotalRevenue(): Promise<ApiResponse<number> | HttpException> {
+    const totalEarned: any = await this.getTotalTransactionsByMotif(
+      TransactionMotif.AppFee,
+    );
+
+    const totalWithdrawn: any = await this.getTotalTransactionsByMotif(
+      TransactionMotif.ReferralGain,
+    );
+
+    // const totalWaitingToBeWithdrawn = 0;
+
+    const totalRevenue = totalEarned.data - totalWithdrawn.data;
+
+    return new ApiResponse({ data: totalRevenue, statusCode: 200 });
+  }
+
   async onTransactionComplete(data: TransactionData) {
     try {
       await this.jwtService.verifyAsync(data.signature, {
