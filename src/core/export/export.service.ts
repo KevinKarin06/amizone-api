@@ -12,6 +12,7 @@ import { ApiResponse } from 'src/types/response';
 import { user, userExport } from '@prisma/client';
 import { EVENTS, Status } from 'src/utils/constants';
 import {
+  deleteFile,
   generateFilePath,
   getCurrentTimestamp,
   writeToFile,
@@ -29,8 +30,8 @@ export class ExportService {
     id: string,
     authUser: user,
   ): Promise<StreamableFile | HttpException> {
-    const userExport = await this.prismaService.userExport.findFirst({
-      where: { id, status: Status.Success },
+    const userExport = await this.prismaService.userExport.findUnique({
+      where: { id },
     });
 
     if (!userExport) {
@@ -47,6 +48,32 @@ export class ExportService {
 
     const file = createReadStream(userExport.filePath);
     return new StreamableFile(file);
+  }
+
+  async deleteExport(
+    id: string,
+    authUser: user,
+  ): Promise<ApiResponse<any> | HttpException> {
+    const userExport = await this.prismaService.userExport.findUnique({
+      where: { id },
+    });
+    if (!userExport) {
+      throw new NotFoundException('Export export not found');
+    }
+
+    if (userExport.userId != authUser.id && !authUser.isAdmin) {
+      throw new ForbiddenException();
+    }
+
+    if (existsSync(userExport.filePath)) {
+      deleteFile(userExport.filePath);
+    }
+
+    await this.prismaService.userExport.delete({
+      where: { id },
+    });
+
+    return new ApiResponse({ data: {}, statusCode: 200 });
   }
 
   async launchContactExport(

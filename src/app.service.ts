@@ -2,13 +2,16 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from './core/prisma/prisma.service';
 import { hashPassword } from './utils/misc';
 import { Status } from './utils/constants';
+import { ApiResponse } from './types/response';
+import { CustomLogger } from './utils/logger';
 
 @Injectable()
 export class AppService implements OnModuleInit {
+  private logger = new CustomLogger('AppService');
   constructor(private prismaService: PrismaService) {}
 
-  getHello(): string {
-    return 'App is up and running.....';
+  index(): ApiResponse<string> {
+    return new ApiResponse({ data: 'Amizone is up and running 😁' });
   }
 
   async onModuleInit() {
@@ -27,7 +30,7 @@ export class AppService implements OnModuleInit {
         },
       });
     } catch (error) {
-      console.log('Failed clean export', error?.message);
+      this.logger.error('Failed clean export', error);
     }
   }
 
@@ -64,7 +67,7 @@ export class AppService implements OnModuleInit {
         });
       }
     } catch (error) {
-      console.log('Failed to initialize admin', error?.message);
+      this.logger.error('Failed clean export', error);
     }
   }
 }

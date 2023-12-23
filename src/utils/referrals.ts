@@ -4,7 +4,7 @@ import { TransactionMotif, Status } from 'src/utils/constants';
 const prismaClient = new PrismaClient();
 const referralRule = {
   1: 1000,
-  2: 200,
+  2: 300,
   3: 100,
 };
 
@@ -29,7 +29,7 @@ export const getChildrenRecursive = async (user: any, n: number, depth = 1) => {
   return user;
 };
 
-export const extractReferralIDsFromTransactions = async (userId: string) => {
+export const getReferralIDsFromTransactions = async (userId: string) => {
   const transactions = await prismaClient.transaction.findMany({
     where: {
       userId: userId,
@@ -58,7 +58,7 @@ export const calculateReferralBalance = async (
   let referralGain = {};
 
   const directChildren = await prismaClient.user.findMany({
-    where: { parentId: userId, id: { not: userId } },
+    where: { parentId: userId, id: { not: userId }, hasPayment: true },
     select: { id: true },
   });
 

@@ -12,7 +12,7 @@ export class TechSoftAPI {
 
   async sendSms(data: SmsMessage) {
     try {
-      await this.httpClient.get(this.buildSmsUrl(data));
+      this.httpClient.get(this.buildSmsUrl(data));
     } catch (error) {
       console.log('error', error);
     }

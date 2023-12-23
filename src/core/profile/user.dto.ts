@@ -50,6 +50,14 @@ export class UserDto {
 
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
   parentId?: string;
 
   @IsString()

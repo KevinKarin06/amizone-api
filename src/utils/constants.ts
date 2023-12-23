@@ -3,6 +3,7 @@ export const PUBLIC_DIR = 'exports';
 export const EVENTS = {
   otpSend: 'otp.send',
   launchExport: 'export.launch',
+  signupCompletionReminder: 'signup.reminder',
 };
 
 export enum TransactionMotif {

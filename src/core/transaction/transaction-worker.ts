@@ -10,19 +10,21 @@ import {
   TransactionType,
 } from 'src/utils/constants';
 import { transaction } from '@prisma/client';
+import { CustomLogger } from 'src/utils/logger';
 import {
+  getReferralIDsFromTransactions,
   calculateReferralBalance,
-  extractReferralIDsFromTransactions,
-} from '../prisma/prisma-utils';
+} from 'src/utils/referrals';
 
 @Processor('transaction')
 export class TransactionWorker {
   private camPayService: CamPayAPI;
+  private logger = new CustomLogger('TransactionWorker');
   constructor(private prismaService: PrismaService) {}
 
   @Process({ concurrency: 1 })
   async processTransaction(job: Job<TransactionDto & { userId: string }>) {
-    console.log('Processing job: ', job.id);
+    this.logger.log('Processing job: ', job.id);
     this.camPayService = await CamPayAPI.build();
     const user = await this.prismaService.user.findUnique({
       where: { id: job.data.userId },
@@ -78,7 +80,7 @@ export class TransactionWorker {
       if (!user?.hasPayment) {
         return;
       }
-      const transactionReferralIds = await extractReferralIDsFromTransactions(
+      const transactionReferralIds = await getReferralIDsFromTransactions(
         job.data.userId,
       );
 
