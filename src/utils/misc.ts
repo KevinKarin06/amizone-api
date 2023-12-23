@@ -97,7 +97,7 @@ export const formatQueryParams = (queryParams: any, filterFields = []) => {
   };
 
   filterFields.forEach((field) => {
-    if (queryParams?.[field]) {
+    if (queryParams[field]) {
       if (field === 'interest') {
         filters[field] = { contains: queryParams[field] };
       } else if (field === 'startDate') {
@@ -108,6 +108,10 @@ export const formatQueryParams = (queryParams: any, filterFields = []) => {
         } else {
           filters['createdAt'] = { lte: new Date(queryParams[field]) };
         }
+      } else if (field === 'dateOfBirth') {
+        filters[field] = new Date(queryParams[field]);
+      } else if (isBooleanValue(queryParams[field])) {
+        filters[field] = stringToBoolean(queryParams[field]);
       } else {
         filters[field] = queryParams[field];
       }
@@ -133,4 +137,15 @@ export const isDateOlderThanHours = (date: Date, hours: number): boolean => {
   const differenceInMilliseconds = currentDateTime.getTime() - date.getTime();
 
   return differenceInMilliseconds > hoursInMilliseconds;
+};
+
+export const stringToBoolean = (value: string) => {
+  return value.toLocaleLowerCase() === 'true';
+};
+
+export const isBooleanValue = (value: string) => {
+  return (
+    value.toLocaleLowerCase() === 'false' ||
+    value.toLocaleLowerCase() === 'true'
+  );
 };

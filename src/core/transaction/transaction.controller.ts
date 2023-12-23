@@ -3,6 +3,7 @@ import { TransactionService } from './transaction.service';
 import { TransactionData, TransactionDto } from './transaction.dto';
 import { Admin, Payment, Public } from 'src/guards/auth.guard';
 import { formatQueryParams } from 'src/utils/misc';
+import { TransactionMotif } from 'src/utils/constants';
 
 @Admin(false)
 @Payment(false)
@@ -27,6 +28,46 @@ export class TransactionController {
     const queryParams = formatQueryParams(params, this.filterableFields);
 
     return await this.transactionService.getTransactions(queryParams, req.user);
+  }
+
+  @Admin(true)
+  @Get('total-revenue')
+  async getTotalRevenue() {
+    return await this.transactionService.calculateTotalRevenue();
+  }
+
+  @Admin(true)
+  @Get('total-received')
+  async getTotalReceived() {
+    return await this.transactionService.getTotalTransactionsByMotif(
+      TransactionMotif.AppFee,
+    );
+  }
+
+  @Admin(true)
+  @Get('total-received/monthly')
+  async getTotalReceivedMonthly(@Req() req: any) {
+    return await this.transactionService.getTotalMonthlyTransactionsByMotif(
+      TransactionMotif.AppFee,
+      req.query?.year || new Date().getFullYear(),
+    );
+  }
+
+  @Admin(true)
+  @Get('total-withdrawn')
+  async getTotalWithdrawn() {
+    return await this.transactionService.getTotalTransactionsByMotif(
+      TransactionMotif.ReferralGain,
+    );
+  }
+
+  @Admin(true)
+  @Get('total-withdrawn/monthly')
+  async getTotalWithdrawnMonthly(@Req() req: any) {
+    return await this.transactionService.getTotalMonthlyTransactionsByMotif(
+      TransactionMotif.ReferralGain,
+      req.query?.year || new Date().getFullYear(),
+    );
   }
 
   @Post('')
