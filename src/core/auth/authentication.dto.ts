@@ -5,13 +5,14 @@ import {
   IsNumber,
   IsEmail,
 } from 'class-validator';
-import { IsValidSex } from '../common/validator';
+import { IsValidPhoneNumber, IsValidSex } from '../common/validator';
 
 export class RegisterDto {
   @IsString()
   name: string;
 
   @IsString()
+  @IsValidPhoneNumber()
   phoneNumber: string;
 
   @IsString()
@@ -52,6 +53,7 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsString()
+  @IsValidPhoneNumber()
   phoneNumber: string;
 
   @IsString()
@@ -60,11 +62,13 @@ export class LoginDto {
 
 export class ResendDto {
   @IsNotEmpty()
+  @IsValidPhoneNumber()
   phoneNumber: string;
 }
 
 export class VerifyDto {
   @IsNotEmpty()
+  @IsValidPhoneNumber()
   phoneNumber: string;
 
   @IsNumber()

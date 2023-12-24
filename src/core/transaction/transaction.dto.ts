@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { TransactionMotif } from 'src/utils/constants';
+import { IsValidPhoneNumber } from '../common/validator';
 
 @ValidatorConstraint({ name: 'isValidMotif', async: false })
 class IsValidMotifConstraint implements ValidatorConstraintInterface {
@@ -42,6 +43,7 @@ export class TransactionDto {
 
   @IsNotEmpty()
   @IsString()
+  @IsValidPhoneNumber()
   phoneNumber: string;
 }
 

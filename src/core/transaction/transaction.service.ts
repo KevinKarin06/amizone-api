@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   HttpException,
+  HttpStatus,
   Injectable,
 } from '@nestjs/common';
 import { TransactionData, TransactionDto } from './transaction.dto';
@@ -74,7 +75,10 @@ export class TransactionService {
         },
       );
     } catch (error) {
-      throw new HttpException('Cannot process transaction', 500);
+      throw new HttpException(
+        'Cannot process transaction',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return new ApiResponse({ data: {}, statusCode: 201 });
