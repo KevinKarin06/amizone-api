@@ -5,7 +5,7 @@ import {
   IsBase64,
   IsBoolean,
 } from 'class-validator';
-import { IsValidSex } from '../common/validator';
+import { IsValidPhoneNumber, IsValidSex } from '../common/validator';
 
 export class UserDto {
   @IsString()
@@ -13,6 +13,7 @@ export class UserDto {
   name?: string;
 
   @IsString()
+  @IsValidPhoneNumber()
   @IsOptional()
   phoneNumber?: string;
 

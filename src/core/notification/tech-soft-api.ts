@@ -1,8 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
 import { SmsMessage } from 'src/types/misc';
+import { CustomLogger } from 'src/utils/logger';
 
 export class TechSoftAPI {
   private httpClient: AxiosInstance = null;
+  private logger = new CustomLogger('TechSoftAPI');
   private baseUrl = 'https://app.techsoft-web-agency.com/sms/api';
   constructor() {
     this.httpClient = axios.create({
@@ -12,9 +14,9 @@ export class TechSoftAPI {
 
   async sendSms(data: SmsMessage) {
     try {
-      this.httpClient.get(this.buildSmsUrl(data));
+      await this.httpClient.get(this.buildSmsUrl(data));
     } catch (error) {
-      console.log('error', error);
+      this.logger.error(error);
     }
   }
 

@@ -20,128 +20,186 @@ import {
 export class TransactionWorker {
   private camPayService: CamPayAPI;
   private logger = new CustomLogger('TransactionWorker');
+
   constructor(private prismaService: PrismaService) {}
 
   @Process({ concurrency: 1 })
   async processTransaction(job: Job<TransactionDto & { userId: string }>) {
-    this.logger.log('Processing job: ', job.id);
-    this.camPayService = await CamPayAPI.build();
-    const user = await this.prismaService.user.findUnique({
-      where: { id: job.data.userId },
-    });
+    try {
+      this.logger.log('Processing job: ' + job.id);
 
-    if (job.data.motif === TransactionMotif.AppFee) {
-      if (user?.hasPayment) {
-        return;
+      this.camPayService = await CamPayAPI.build();
+      const user = await this.getUser(job.data.userId);
+
+      if (job.data.motif === TransactionMotif.AppFee) {
+        await this.processAppFee(user, job.data);
+      } else {
+        await this.processReferralTransaction(user, job.data);
       }
-
-      const amount = process.env.APP_FEE || '50';
-      let transaction: transaction;
-
-      try {
-        transaction = await this.prismaService.transaction.create({
-          data: {
-            amount,
-            motif: job.data.motif,
-            receiverPhoneNumber: process.env.ADMIN_PHONE,
-            senderPhoneNumber: job.data.phoneNumber,
-            type: TransactionType.Credit,
-            userId: job.data.userId,
-          },
-        });
-
-        const data = await this.camPayService.requestToPay({
-          amount,
-          id: transaction.id,
-          message: job.data.motif,
-          phoneNumber: job.data.phoneNumber,
-        });
-
-        await this.prismaService.transaction.update({
-          where: { id: transaction.id },
-          data: {
-            reference: data.reference,
-          },
-        });
-      } catch (error) {
-        if (transaction) {
-          await this.prismaService.transaction.update({
-            where: { id: transaction.id },
-            data: {
-              status: Status.Failed,
-              details: error?.response
-                ? JSON.stringify(error?.response?.data)
-                : 'Transaction failed',
-            },
-          });
-        }
-      }
-    } else {
-      if (!user?.hasPayment) {
-        return;
-      }
-      const transactionReferralIds = await getReferralIDsFromTransactions(
-        job.data.userId,
-      );
-
-      const referralGain = await calculateReferralBalance(
-        job.data.userId,
-        MAX_DEPTH,
-        transactionReferralIds,
-      );
-
-      const totalGain = Object.values(referralGain).reduce(
-        (acc: number, currentValue: number) => acc + currentValue,
-        0,
-      ) as number;
-
-      if (totalGain < 1) {
-        return;
-      }
-
-      const referralIds = Object.keys(referralGain).join(',');
-      let transaction: transaction;
-
-      try {
-        transaction = await this.prismaService.transaction.create({
-          data: {
-            amount: String(totalGain),
-            motif: job.data.motif,
-            receiverPhoneNumber: job.data.phoneNumber,
-            senderPhoneNumber: process.env.ADMIN_PHONE,
-            type: TransactionType.Debit,
-            userId: job.data.userId,
-            referralIds: referralIds,
-          },
-        });
-
-        const data = await this.camPayService.sendTo({
-          amount: String(totalGain),
-          id: transaction.id,
-          message: job.data.motif,
-          phoneNumber: job.data.phoneNumber,
-        });
-
-        await this.prismaService.transaction.update({
-          where: { id: transaction.id },
-          data: {
-            reference: data.reference,
-          },
-        });
-      } catch (error) {
-        if (transaction) {
-          await this.prismaService.transaction.update({
-            where: { id: transaction.id },
-            data: {
-              status: Status.Failed,
-              details: error?.response
-                ? JSON.stringify(error?.response?.data)
-                : 'Transaction failed',
-            },
-          });
-        }
-      }
+    } catch (error) {
+      this.logger.error(error);
     }
+
+    this.logger.log('Finished processing job: ' + job.id);
     return {};
+  }
+
+  private async getUser(userId: string) {
+    return await this.prismaService.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+  }
+
+  private async userHasPayment(userId: string) {
+    return await this.prismaService.transaction.findFirst({
+      where: {
+        userId: userId,
+        status: Status.Success,
+        motif: TransactionMotif.AppFee,
+      },
+    });
+  }
+
+  private async processAppFee(user: any, data: any) {
+    const hasPayment = await this.userHasPayment(user.id);
+    if (hasPayment) {
+      this.logger.log('User already has payment ignoring');
+      return;
+    }
+
+    const amount = process.env.APP_FEE || '50';
+    let transaction: transaction;
+
+    try {
+      transaction = await this.createTransaction({
+        amount,
+        motif: data.motif,
+        receiverPhoneNumber: process.env.ADMIN_PHONE,
+        senderPhoneNumber: data.phoneNumber,
+        type: TransactionType.Credit,
+        userId: data.userId,
+      });
+
+      const reference = await this.processPaymentRequest(
+        amount,
+        transaction.id,
+        data,
+      );
+      await this.updateTransactionReference(transaction.id, reference);
+    } catch (error) {
+      await this.handleTransactionFailure(transaction, error);
+    }
+  }
+
+  private async processReferralTransaction(user: any, data: any) {
+    const hasPayment = await this.userHasPayment(user.id);
+    if (!hasPayment) {
+      this.logger.warn("User don't have an active payment ignoring");
+      return;
+    }
+
+    const transactionReferralIds = await getReferralIDsFromTransactions(
+      data.userId,
+    );
+    const referralGain = await calculateReferralBalance(
+      data.userId,
+      MAX_DEPTH,
+      transactionReferralIds,
+    );
+    const totalGain = Object.values(referralGain).reduce(
+      (acc: number, currentValue: number) => acc + currentValue,
+      0,
+    ) as number;
+
+    if (totalGain < 1) {
+      this.logger.warn(`User total gain is ${totalGain} ignoring`);
+      return;
+    }
+
+    const referralIds = Object.keys(referralGain).join(',');
+    let transaction: transaction;
+
+    try {
+      transaction = await this.createTransaction({
+        amount: String(totalGain),
+        motif: data.motif,
+        receiverPhoneNumber: data.phoneNumber,
+        senderPhoneNumber: process.env.ADMIN_PHONE,
+        type: TransactionType.Debit,
+        userId: data.userId,
+        referralIds: referralIds,
+      });
+
+      const reference = await this.processPaymentSend(
+        totalGain,
+        transaction.id,
+        data,
+      );
+      await this.updateTransactionReference(transaction.id, reference);
+    } catch (error) {
+      await this.handleTransactionFailure(transaction, error);
+    }
+  }
+
+  private async createTransaction(transactionData: any) {
+    return await this.prismaService.transaction.create({
+      data: transactionData,
+    });
+  }
+
+  private async processPaymentRequest(
+    amount: string,
+    transactionId: string,
+    data: any,
+  ) {
+    const paymentData = {
+      amount,
+      id: transactionId,
+      message: data.motif,
+      phoneNumber: data.phoneNumber,
+    };
+    const paymentResponse = await this.camPayService.requestToPay(paymentData);
+    return paymentResponse.reference;
+  }
+
+  private async processPaymentSend(
+    amount: number,
+    transactionId: string,
+    data: any,
+  ) {
+    const paymentData = {
+      amount: String(amount),
+      id: transactionId,
+      message: data.motif,
+      phoneNumber: data.phoneNumber,
+    };
+    const paymentResponse = await this.camPayService.sendTo(paymentData);
+    return paymentResponse.reference;
+  }
+
+  private async updateTransactionReference(
+    transactionId: string,
+    reference: string,
+  ) {
+    await this.prismaService.transaction.update({
+      where: { id: transactionId },
+      data: { reference },
+    });
+  }
+
+  private async handleTransactionFailure(
+    transaction: transaction | undefined,
+    error: any,
+  ) {
+    this.logger.error(error);
+    if (transaction) {
+      const errorDetails = error?.response
+        ? JSON.stringify(error.response.data)
+        : 'Transaction failed';
+      await this.prismaService.transaction.update({
+        where: { id: transaction.id },
+        data: { status: Status.Failed, details: errorDetails },
+      });
+    }
   }
 }
