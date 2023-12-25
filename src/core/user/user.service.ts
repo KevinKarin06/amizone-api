@@ -16,7 +16,7 @@ import {
 } from 'src/utils/referrals';
 
 @Injectable()
-export class ProfileService {
+export class UserService {
   constructor(private prismaService: PrismaService) {}
 
   async getUsers(

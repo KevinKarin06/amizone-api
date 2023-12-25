@@ -10,7 +10,7 @@ import { PrismaModule } from './core/prisma/prisma.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
-import { ProfileModule } from './core/profile/profile.module';
+import { UserModule } from './core/user/user.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -28,7 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     NotificationModule,
     TransactionModule,
     PrismaModule,
-    ProfileModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

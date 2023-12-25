@@ -15,11 +15,11 @@ export class AppService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.cleanPendingExports();
-    await this.initDefaultAdmin();
+    await this.initializeAdmin();
+    await this.clearPendingExports();
   }
 
-  private async cleanPendingExports() {
+  private async clearPendingExports() {
     try {
       await this.prismaService.userExport.updateMany({
         where: { status: Status.Pending },
@@ -34,7 +34,7 @@ export class AppService implements OnModuleInit {
     }
   }
 
-  private async initDefaultAdmin() {
+  private async initializeAdmin() {
     try {
       const existingAdmin = await this.prismaService.user.findFirst({
         where: { isAdmin: true },
