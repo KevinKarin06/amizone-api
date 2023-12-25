@@ -1,5 +1,3 @@
 # Amizone 
 
-## Requirements
-
-## How to test
+Cette plateforme est une solution fiable et optimale qui met à vôtre disposition les contacts des personnes qui pourront être vos clients, vos partenaires et ou vos fournisseurs... sur ces contacts, vous pouvez appliquer des opérations telles que filtrer en fonction de vos critères (pour un meilleur ciblage) , expoter les contacts totalement ou partiellement, et bien d'autres... pour ainsi gagner en visibilité et faire exploser votre chiffre d'affaires.
