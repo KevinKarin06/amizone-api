@@ -17,16 +17,22 @@ import { Admin, Payment } from 'src/guards/auth.guard';
 @Payment(true)
 @Controller('export')
 export class ExportController {
-  private filterableFields = [
+  private filterableFields = ['id', 'name', 'status', 'startDate', 'endDate'];
+
+  private userFilterableFields = [
     'name',
     'phoneNumber',
     'profession',
+    'dateOfBirth',
     'sex',
     'interest',
     'phoneVerified',
     'active',
+    'hasPayment',
     'email',
     'locale',
+    'city',
+    'country',
     'startDate',
     'endDate',
   ];
@@ -39,7 +45,7 @@ export class ExportController {
     @Body() body: any,
     @Req() req: any,
   ) {
-    const queryParams = formatQueryParams(params, this.filterableFields);
+    const queryParams = formatQueryParams(params, this.userFilterableFields);
 
     return await this.exportService.launchContactExport(
       req.user,

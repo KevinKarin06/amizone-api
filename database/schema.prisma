@@ -67,6 +67,7 @@ model userExport {
   filePath      String?
   message       String?
   details       String?   @db.MediumText
+  filters       Json?
   user          user      @relation(fields: [userId], references: [id])
   startTime     DateTime?
   endTime       DateTime?

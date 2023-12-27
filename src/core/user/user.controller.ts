@@ -1,5 +1,5 @@
 import { Controller, Param, Put, Body, Req, Get, Query } from '@nestjs/common';
-import { ProfileService } from './profile.service';
+import { UserService } from './user.service';
 import { UserDto } from './user.dto';
 import { Admin, Payment } from 'src/guards/auth.guard';
 import { formatQueryParams } from 'src/utils/misc';
@@ -7,7 +7,7 @@ import { formatQueryParams } from 'src/utils/misc';
 @Admin(false)
 @Payment(false)
 @Controller('')
-export class ProfileController {
+export class UserController {
   private filterableFields = [
     'id',
     'name',
@@ -22,11 +22,13 @@ export class ProfileController {
     'email',
     'parentId',
     'locale',
+    'city',
+    'country',
     'startDate',
     'endDate',
   ];
 
-  constructor(private profileService: ProfileService) {}
+  constructor(private profileService: UserService) {}
 
   @Payment(true)
   @Get('user')

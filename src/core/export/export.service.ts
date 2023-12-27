@@ -19,9 +19,11 @@ import {
   writeToFile,
 } from 'src/utils/misc';
 import { createReadStream, existsSync } from 'fs';
+import { CustomLogger } from 'src/utils/logger';
 
 @Injectable()
 export class ExportService {
+  private logger = new CustomLogger('ExportService');
   constructor(
     private prismaService: PrismaService,
     private eventEmitter: EventEmitter2,
@@ -99,6 +101,18 @@ export class ExportService {
       throw new ConflictException('Another export is ongoing');
     }
 
+    if (body?.name) {
+      const userExport = await this.prismaService.userExport.findFirst({
+        where: { userId: authUser.id, name: body?.name },
+      });
+
+      if (userExport) {
+        throw new ConflictException(
+          'Another export with the same name already exist',
+        );
+      }
+    }
+
     this.eventEmitter.emit(EVENTS.launchExport, {
       filters,
       userId: authUser.id,
@@ -126,6 +140,7 @@ export class ExportService {
 
   @OnEvent(EVENTS.launchExport, { async: true })
   async exportUserContacts(payload: any) {
+    this.logger.log('Launching export....', payload);
     const { filters, userId, name } = payload;
 
     const exportName = name || `Export_${getCurrentTimestamp()}`;
@@ -134,6 +149,7 @@ export class ExportService {
         status: Status.Pending,
         userId,
         name: exportName,
+        filters,
         startTime: new Date(),
       },
     });
@@ -191,7 +207,7 @@ export class ExportService {
         },
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
       await this.prismaService.userExport.update({
         where: { id: contactExport.id },
         data: {
@@ -202,5 +218,7 @@ export class ExportService {
         },
       });
     }
+
+    this.logger.log('Export complete');
   }
 }
